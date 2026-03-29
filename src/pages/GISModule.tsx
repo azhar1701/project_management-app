@@ -1,4 +1,51 @@
 import { MapPin, MousePointer2, Pencil, Hexagon, Layers } from 'lucide-react';
+import Map, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
+import type { FillLayerSpecification, LineLayerSpecification } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+
+// Mock GeoJSON data for a Watershed Catchment Area
+const watershedGeojson = {
+  type: 'FeatureCollection' as const,
+  features: [
+    {
+      type: 'Feature' as const,
+      properties: { name: 'Merapi Catchment' },
+      geometry: {
+        type: 'Polygon' as const,
+        coordinates: [
+          [
+            [110.35, -7.50],
+            [110.45, -7.48],
+            [110.50, -7.55],
+            [110.42, -7.62],
+            [110.35, -7.50]
+          ]
+        ]
+      }
+    }
+  ]
+};
+
+const fillLayer: Omit<FillLayerSpecification, 'source'> = {
+  id: 'watershed-fill',
+  type: 'fill',
+  paint: {
+    'fill-color': '#F27D26',
+    'fill-opacity': 0.2
+  }
+};
+
+const lineLayer: Omit<LineLayerSpecification, 'source'> = {
+  id: 'watershed-outline',
+  type: 'line',
+  paint: {
+    'line-color': '#F27D26',
+    'line-width': 2,
+    'line-dasharray': [2, 2]
+  }
+};
 
 export function GISModule() {
   return (
@@ -9,24 +56,23 @@ export function GISModule() {
       </div>
 
       <div className="flex-1 relative bg-surface tech-border tech-shadow overflow-hidden flex">
-        {/* Mock Map Background */}
-        <div className="absolute inset-0 opacity-20" style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23141414\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
-          backgroundSize: '100px 100px'
-        }}></div>
-        
-        {/* Mock Global Polygons */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-          {/* Project 1 */}
-          <path d="M 200 150 Q 300 50 400 200 T 500 350 Q 350 450 250 400 Z" fill="rgba(242, 125, 38, 0.1)" stroke="#F27D26" strokeWidth="2" strokeDasharray="5,5" />
-          <circle cx="350" cy="300" r="4" fill="#141414" />
-          <text x="360" y="305" fontSize="12" fill="#141414" fontWeight="bold" fontFamily="JetBrains Mono" className="uppercase tracking-widest">Merapi Dam</text>
+        <Map
+          initialViewState={{
+            longitude: 110.42,
+            latitude: -7.54,
+            zoom: 10,
+            pitch: 30
+          }}
+          mapStyle={MAP_STYLE}
+          attributionControl={false}
+        >
+          <NavigationControl position="bottom-right" style={{ marginRight: '16px', marginBottom: '16px' }} />
 
-          {/* Project 2 */}
-          <path d="M 600 200 Q 700 100 800 250 T 900 400 Q 750 500 650 450 Z" fill="rgba(20, 20, 20, 0.05)" stroke="#141414" strokeWidth="2" strokeDasharray="5,5" />
-          <circle cx="750" cy="350" r="4" fill="#F27D26" />
-          <text x="760" y="355" fontSize="12" fill="#141414" fontWeight="bold" fontFamily="JetBrains Mono" className="uppercase tracking-widest">Solo River Basin</text>
-        </svg>
+          <Source id="watershed" type="geojson" data={watershedGeojson}>
+            <Layer {...fillLayer} />
+            <Layer {...lineLayer} />
+          </Source>
+        </Map>
 
         {/* Drawing Tools (Top Left) */}
         <div className="absolute top-4 left-4 bg-paper tech-border tech-shadow flex flex-col overflow-hidden pointer-events-auto">

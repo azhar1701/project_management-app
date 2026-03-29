@@ -1,24 +1,42 @@
 import { CheckCircle2, Clock, AlertCircle, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useStore } from '../store/useStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useMemo } from 'react';
+import Map, { Marker } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 export function Dashboard() {
+  const { projects, tasks } = useStore(useShallow(state => ({ projects: state.projects, tasks: state.tasks })));
+
+  const { ongoingCount, overdueCount, completedCount } = useMemo(() => {
+    return {
+      ongoingCount: projects.filter(p => p.status === 'In Progress').length,
+      overdueCount: projects.filter(p => p.status === 'Overdue').length,
+      completedCount: projects.filter(p => p.status === 'Completed').length
+    };
+  }, [projects]);
+
   const projectsAtAGlance = [
-    { label: 'Ongoing', count: 12, icon: Clock, color: 'text-ink', bg: 'bg-surface', border: 'tech-border' },
-    { label: 'Overdue', count: 3, icon: AlertCircle, color: 'text-[#FF4400]', bg: 'bg-surface', border: 'tech-border' },
-    { label: 'Completed', count: 45, icon: CheckCircle2, color: 'text-accent', bg: 'bg-surface', border: 'tech-border' },
+    { label: 'Ongoing', count: ongoingCount, icon: Clock, color: 'text-ink', bg: 'bg-surface', border: 'tech-border' },
+    { label: 'Overdue', count: overdueCount, icon: AlertCircle, color: 'text-[#FF4400]', bg: 'bg-surface', border: 'tech-border' },
+    { label: 'Completed', count: completedCount, icon: CheckCircle2, color: 'text-accent', bg: 'bg-surface', border: 'tech-border' },
   ];
 
-  const myTasks = [
-    { id: 1, title: 'Review Merapi Dam Hydrology Report', project: 'Merapi Dam EIA', due: 'Today, 2:00 PM', status: 'In Progress' },
-    { id: 2, title: 'Update Watershed Boundary GIS Layer', project: 'Ciliwung River Basin', due: 'Today, 5:00 PM', status: 'To Do' },
-    { id: 3, title: 'Field Survey Data Entry - Site A', project: 'Brantas Flood Control', due: 'Tomorrow', status: 'To Do' },
-  ];
+  // Get up to 4 active tasks assigned to the current user
+  const myTasks = useMemo(() => {
+    return tasks.filter(t => t.status !== 'Done').slice(0, 4);
+  }, [tasks]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink pb-4">
         <h1 className="text-3xl font-bold text-ink tracking-tight uppercase">Project Overview</h1>
-        <div className="text-sm font-mono text-muted uppercase tracking-widest">Thursday, Oct 24, 2026</div>
+        <div className="text-sm font-mono text-muted uppercase tracking-widest">
+          {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date())}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -52,11 +70,10 @@ export function Dashboard() {
                     <p className="text-xs font-mono text-muted mb-3 uppercase tracking-wide">{task.project}</p>
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="flex items-center gap-1.5 text-ink font-bold">
-                        <Clock className="w-3 h-3" /> {task.due}
+                        <Clock className="w-3 h-3" /> {task.dueDate}
                       </span>
-                      <span className={`px-2 py-1 border border-ink font-bold uppercase tracking-wider ${
-                        task.status === 'In Progress' ? 'bg-accent text-surface' : 'bg-paper text-ink'
-                      }`}>
+                      <span className={`px-2 py-1 border border-ink font-bold uppercase tracking-wider ${task.status === 'In Progress' ? 'bg-accent text-surface' : 'bg-paper text-ink'
+                        }`}>
                         {task.status}
                       </span>
                     </div>
@@ -76,31 +93,39 @@ export function Dashboard() {
             </Link>
           </div>
           <div className="flex-1 relative bg-paper">
-            {/* Placeholder for Map */}
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23111111\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
-            }}></div>
-            
-            {/* Mock Map Pins */}
-            <Link to="/project/1" className="absolute top-1/4 left-1/3 flex flex-col items-center group cursor-pointer">
-              <div className="bg-surface border border-ink px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-ink mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Merapi Dam EIA</div>
-              <MapPin className="w-6 h-6 text-accent drop-shadow-md" fill="currentColor" />
-            </Link>
-            <div className="absolute top-1/2 left-2/3 flex flex-col items-center group cursor-pointer">
-              <div className="bg-surface border border-ink px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-ink mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ciliwung River Basin</div>
-              <MapPin className="w-6 h-6 text-ink drop-shadow-md" fill="currentColor" />
-            </div>
-            <div className="absolute bottom-1/3 left-1/4 flex flex-col items-center group cursor-pointer">
-              <div className="bg-surface border border-ink px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-ink mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Brantas Flood Control</div>
-              <MapPin className="w-6 h-6 text-accent drop-shadow-md" fill="currentColor" />
-            </div>
-            
-            {/* Map Controls Mock */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-              <div className="bg-surface tech-border tech-shadow overflow-hidden flex flex-col">
-                <button className="w-8 h-8 flex items-center justify-center text-ink hover:bg-paper border-b border-ink font-mono font-bold">+</button>
-                <button className="w-8 h-8 flex items-center justify-center text-ink hover:bg-paper font-mono font-bold">-</button>
-              </div>
+            <Map
+              initialViewState={{
+                longitude: 110.42,
+                latitude: -7.54,
+                zoom: 5.5,
+                pitch: 45
+              }}
+              mapStyle={MAP_STYLE}
+              interactive={true}
+              attributionControl={false}
+            >
+              {/* Active Project Marker */}
+              <Marker longitude={110.42} latitude={-7.54} anchor="bottom">
+                <Link to="/project/1" className="flex flex-col items-center group cursor-pointer transition-transform hover:scale-110">
+                  <div className="bg-surface border border-accent p-1 tech-shadow text-[10px] font-mono font-bold uppercase tracking-wider text-accent mb-1 whitespace-nowrap">Merapi Dam EIA</div>
+                  <MapPin className="w-6 h-6 text-accent drop-shadow-[0_0_8px_rgba(242,125,38,0.8)]" fill="#F27D26" color="#141414" />
+                </Link>
+              </Marker>
+
+              <Marker longitude={112.75} latitude={-7.25} anchor="bottom">
+                <Link to="/project/3" className="flex flex-col items-center group cursor-pointer transition-transform hover:scale-110">
+                  <div className="bg-surface border border-ink p-1 tech-shadow text-[10px] font-mono font-bold uppercase tracking-wider text-ink mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Brantas River</div>
+                  <MapPin className="w-5 h-5 text-ink drop-shadow-md" fill="currentColor" color="#F2F2F2" />
+                </Link>
+              </Marker>
+            </Map>
+          </div>
+
+          {/* Map Controls Mock */}
+          <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+            <div className="bg-surface tech-border tech-shadow overflow-hidden flex flex-col">
+              <button className="w-8 h-8 flex items-center justify-center text-ink hover:bg-paper border-b border-ink font-mono font-bold">+</button>
+              <button className="w-8 h-8 flex items-center justify-center text-ink hover:bg-paper font-mono font-bold">-</button>
             </div>
           </div>
         </div>
